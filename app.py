@@ -1,26 +1,30 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, render_template
 import joblib
 import numpy as np
 
 app = Flask(__name__)
 
-# Load model
 model = joblib.load('model.pkl')
 
-# Define class names (Iris dataset target names)
-target_names = ['setosa', 'versicolor', 'virginica']
+# Mapping class numbers to names
+class_names = ['setosa', 'versicolor', 'virginica']
 
 @app.route('/')
 def home():
-    return "Iris ML Model API is Running!"
+    return render_template('index.html')
 
 @app.route('/predict', methods=['POST'])
 def predict():
-    data = request.json
-    features = np.array(data['features']).reshape(1, -1)
+    sepal_length = float(request.form['sepal_length'])
+    sepal_width = float(request.form['sepal_width'])
+    petal_length = float(request.form['petal_length'])
+    petal_width = float(request.form['petal_width'])
+
+    features = np.array([[sepal_length, sepal_width, petal_length, petal_width]])
     prediction = model.predict(features)
-    predicted_class = target_names[int(prediction[0])]   # Use target_names here
-    return jsonify({'prediction': predicted_class})
+    predicted_class = class_names[prediction[0]]  # Convert 0/1/2 into name
+
+    return render_template('index.html', prediction=predicted_class)
 
 if __name__ == '__main__':
     app.run(debug=True)
